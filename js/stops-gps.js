@@ -3,7 +3,7 @@
 let stopId = null;
 function openStop(id, desc) {
   stopId = id; const p = places[id], di = dayInfo();
-  $("stopTitle").textContent = p.name;
+  $("stopTitle").textContent = displayStopName(id);
   $("stopDesc").textContent = desc || tx(di.isToday ? "next_buses" : "first_buses");
   const nx = nextAtStop(id, di, di.isToday ? nowMin() : 0, 6);
   $("stopBuses").innerHTML = nx.length
@@ -14,14 +14,14 @@ function openStop(id, desc) {
   else if (id === CP_ID && buses.some(b => busActive(b, di) && routeTipInfo(b))) {
     const t0 = di.isToday ? nowMin() : 0, wd = dist(stopLL(CP_ID), stopLL(KRP_ID));
     const nx = nextAtStop(KRP_ID, di, t0 + wd / WALK, 1)[0];
-    if (nx) tipHtml = `<b>${tx("tip_krp_title")}</b><span>${tx("tip_stop_cp", { w: walkTxt(wd), s: esc(places[KRP_ID].name), b: esc(nx.b.code), t: Bus.fmt(nx.t) })}</span>`;
+    if (nx) tipHtml = `<b>${tx("tip_krp_title")}</b><span>${tx("tip_stop_cp", { w: walkTxt(wd), s: esc(displayStopName(KRP_ID)), b: esc(nx.b.code), t: Bus.fmt(nx.t) })}</span>`;
   }
   $("stopTip").innerHTML = tipHtml; $("stopTip").classList.toggle("hide", !tipHtml);
   $("stopCard").classList.remove("hide");
 }
 $("stopClose").onclick = () => $("stopCard").classList.add("hide");
-$("stopFrom").onclick = () => { origLL = null; $("fromIn").value = places[stopId].name; $("stopCard").classList.add("hide"); setTab("plan"); toast(tx("set_from")); };
-$("stopTo").onclick = () => { destLL = null; clearTarget(); $("toIn").value = places[stopId].name; $("stopCard").classList.add("hide"); setTab("plan"); toast(tx("set_to")); };
+$("stopFrom").onclick = () => { origLL = null; $("fromIn").value = displayStopName(stopId); $("stopCard").classList.add("hide"); setTab("plan"); toast(tx("set_from")); };
+$("stopTo").onclick = () => { destLL = null; clearTarget(); $("toIn").value = displayStopName(stopId); $("stopCard").classList.add("hide"); setTab("plan"); toast(tx("set_to")); };
 
 /* ---------- GPS ---------- */
 let meMarker = null, mePos = null;
@@ -54,4 +54,4 @@ function locate(onDone) {
     openStop(n.id, tx("nearest_desc", { d: Math.round(n.d) }));
   }, err => geoError(err), { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
 }
-$("useLoc").onclick = () => locate(n => { origLL = mePos; $("fromIn").value = tx("my_loc_val"); toast(tx("nearest_toast", { s: places[n.id].name, d: Math.round(n.d) })); });
+$("useLoc").onclick = () => locate(n => { origLL = mePos; $("fromIn").value = tx("my_loc_val"); toast(tx("nearest_toast", { s: displayStopName(n.id), d: Math.round(n.d) })); });

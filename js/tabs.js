@@ -29,7 +29,7 @@ const cur = { route: null };
 function populate() {
   stopIds = [...new Set(buses.flatMap(b => b.path))].filter(i => places[i]);
   nameToId = {}; stopIds.forEach(id => { const n = places[id].name.toLowerCase(); if (!nameToId[n]) nameToId[n] = id; });
-  $("placeList").innerHTML = stopIds.map(id => `<option value="${esc(places[id].name)}">`).join("");
+  buildStopSearchIndex();
   cur.route = buses[0]?.code || null;
   drawRoutes(); drawStops(); fitAll(); renderRoutes(); renderQuick();
   $("timeIn").value = Bus.fmt(nowMin());

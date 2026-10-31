@@ -9,7 +9,7 @@ function legStops(l) {
 function tripTimeline(legs, o) {
   o = o || {};
   const GR = "rgba(144,164,174,.7)", T = "transparent";
-  const col = l => colorOf[l.b.code] || "#00e5ff", nm = id => places[id].name;
+  const col = l => colorOf[l.b.code] || "#00e5ff", nm = id => displayStopName(id);
   const rl = (a, b, cls, inner) => `<span class="rl ${cls || ""}" style="--a:${a};--b:${b}">${inner || ""}</span>`;
   const stop = (time, name, sub, a, b, c) => `<div class="st"><b class="tm">${Bus.fmt(time)}</b>${rl(a, b, "", `<i class="dot" style="--c:${c}"></i>`)}<div class="nm"><b>${esc(name)}</b>${sub ? `<span class="muted"> · ${sub}</span>` : ""}</div></div>`;
   const note = (time, html) => `<div class="st"><b class="tm">${time == null ? "" : Bus.fmt(time)}</b>${rl(GR, GR, "full dash")}<div class="nm">${html}</div></div>`;
@@ -39,19 +39,117 @@ function tripTimeline(legs, o) {
 }
 
 /* ---------- Plan tab ---------- */
+const STOP_GROUP_NAMES = {
+  KRP: "Kolej Rahman Putra",
+  KTC: "Kolej Tuanku Canselor",
+  KTDI: "Kolej Tun Dr Ismail",
+  KTHO: "Kolej Tun Hussein Onn",
+  KTR: "Kolej Tun Razak",
+  KDSE: "Kolej Datin Seri Endon",
+  KDOJ: "Kolej Dato' Onn Jaafar"
+};
+const STOP_DISPLAY_NAMES = {
+  KTF: "Kolej Tun Fatimah",
+  KRP_G11: "Arked Meranti",
+  LESTARI: "Arked Lestari",
+  FKE: "Faculty of Electrical Engineering (FKE)",
+  KDSE: "Kolej Datin Seri Endon (KDSE)",
+  KDOJ: "Kolej Dato' Onn Jaafar"
+};
+const STOP_SEARCH_ALIASES = {
+  FKE: ["Fakulti Kejuruteraan Elektrik"]
+};
+const displayStopName = id => {
+  if (STOP_DISPLAY_NAMES[id]) return STOP_DISPLAY_NAMES[id];
+  const match = /^([A-Z]+)_(.+)$/.exec(id);
+  if (!match) return places[id]?.name || id;
+  const group = STOP_GROUP_NAMES[match[1]];
+  return group ? `${group} ${match[2]}` : `${match[1]} ${match[2]}`;
+};
+const normalizeStopQuery = value => String(value || "").normalize("NFKD")
+  .replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().replace(/\s+/g, " ");
+let stopSearchIndex = [];
+function buildStopSearchIndex() {
+  stopSearchIndex = stopIds.map(id => {
+    const aliases = new Set([id, places[id].name, displayStopName(id), ...(STOP_SEARCH_ALIASES[id] || [])]);
+    const krpNumber = /^KRP_G(\d+)$/i.exec(id);
+    if (krpNumber) aliases.add(`KRP ${krpNumber[1]}`);
+    return { id, label: displayStopName(id), aliases: [...aliases].map(normalizeStopQuery) };
+  });
+}
+function findStopSuggestions(query) {
+  const q = normalizeStopQuery(query);
+  if (!q) return [];
+  const words = q.split(" ");
+  return stopSearchIndex.map(stop => {
+    let score = Infinity;
+    for (const alias of stop.aliases) {
+      if (alias === q) score = Math.min(score, 0);
+      else if (alias.startsWith(q)) score = Math.min(score, 1);
+      else if (alias.includes(q)) score = Math.min(score, 2);
+      else if (words.every(word => alias.split(" ").some(part => part.startsWith(word)))) score = Math.min(score, 3);
+    }
+    return { ...stop, score };
+  }).filter(stop => Number.isFinite(stop.score))
+    .sort((a, b) => a.score - b.score || a.label.localeCompare(b.label))
+    .slice(0, 8);
+}
 function resolveStop(v) {
-  v = (v || "").trim().toLowerCase(); if (!v) return null;
-  if (nameToId[v]) return nameToId[v];
-  const k = Object.keys(nameToId).find(n => n.includes(v)); if (k) return nameToId[k];
-  return Object.keys(places).find(i => i.toLowerCase() === v) || null;
+  const q = normalizeStopQuery(v); if (!q) return null;
+  const exact = stopSearchIndex.find(stop => stop.aliases.includes(q));
+  if (exact) return exact.id;
+  return findStopSuggestions(q)[0]?.id || null;
 }
 $("swapBtn").onclick = () => {
   const a = $("fromIn").value; $("fromIn").value = $("toIn").value; $("toIn").value = a;
   [origLL, destLL] = [destLL, origLL];
 };
 let origLL = null, destLL = null, destMarker = null, picking = false;
-$("fromIn").oninput = () => { origLL = null; };
-$("toIn").oninput = () => { destLL = null; clearTarget(); };
+function renderStopSuggestions(input, list) {
+  const matches = findStopSuggestions(input.value);
+  list.innerHTML = matches.map((stop, i) => `<button type="button" class="stop-suggestion" role="option" aria-selected="${i === 0}" data-stop-id="${esc(stop.id)}"><span>${esc(stop.label)}</span><small>${esc(stop.id)}</small></button>`).join("");
+  list.classList.toggle("hide", matches.length === 0);
+}
+function bindStopSearch(inputId, listId, onInput) {
+  const input = $(inputId), list = $(listId);
+  input.addEventListener("input", () => { onInput(); renderStopSuggestions(input, list); });
+  input.addEventListener("focus", () => renderStopSuggestions(input, list));
+  input.addEventListener("blur", () => setTimeout(() => list.classList.add("hide"), 120));
+  input.addEventListener("keydown", e => {
+    const options = [...list.querySelectorAll("[data-stop-id]")];
+    if (e.key === "Escape") { list.classList.add("hide"); return; }
+    if (e.key === "ArrowDown" && options.length) {
+      e.preventDefault();
+      const current = options.findIndex(option => option.getAttribute("aria-selected") === "true");
+      const next = options[Math.min(current + 1, options.length - 1)];
+      options.forEach(option => option.setAttribute("aria-selected", String(option === next)));
+      return;
+    }
+    if (e.key === "ArrowUp" && options.length) {
+      e.preventDefault();
+      const current = options.findIndex(option => option.getAttribute("aria-selected") === "true");
+      const next = options[Math.max(current - 1, 0)];
+      options.forEach(option => option.setAttribute("aria-selected", String(option === next)));
+      return;
+    }
+    if (e.key === "Enter" && options.length && !list.classList.contains("hide")) {
+      e.preventDefault();
+      const selected = options.find(option => option.getAttribute("aria-selected") === "true") || options[0];
+      input.value = displayStopName(selected.dataset.stopId);
+      list.classList.add("hide");
+    }
+  });
+  list.addEventListener("mousedown", e => e.preventDefault());
+  list.addEventListener("click", e => {
+    const option = e.target.closest("[data-stop-id]");
+    if (!option) return;
+    input.value = displayStopName(option.dataset.stopId);
+    list.classList.add("hide");
+    input.focus();
+  });
+}
+bindStopSearch("fromIn", "fromSuggestions", () => { origLL = null; });
+bindStopSearch("toIn", "toSuggestions", () => { destLL = null; clearTarget(); });
 function clearTarget() { if (destMarker && hasMap) { map.removeLayer(destMarker); destMarker = null; } }
 const WALK = 75; // metres per minute
 const LOCATION_STOP_CANDIDATES = 6;
@@ -138,7 +236,7 @@ function krpTip(oLL, dLL, start, di, baseFinal) {
   return {
     ...best, wd, ready, faster, rideSaved: Math.round(rideSaved),
     saved: Math.round(baseFinal - best.final),
-    dest: places[nearStops(dLL, 1)[0].id].name
+    dest: displayStopName(nearStops(dLL, 1)[0].id)
   };
 }
 
@@ -166,7 +264,7 @@ function plan(preserveSelection = false) {
   };
   const addTip = baseFinal => {
     const tip = krpTip(oLL, dLL, start, di, baseFinal); if (!tip) return false;
-    const kn = esc(places[KRP_ID].name), walks = [[oLL, stopLL(KRP_ID)]];
+    const kn = esc(displayStopName(KRP_ID)), walks = [[oLL, stopLL(KRP_ID)]];
     if (tip.d > 15) walks.push([stopLL(tip.id), dLL]);
     const tipText = tip.faster
       ? tx("tip_krp", { w: walkTxt(tip.wd), s: kn, m: tip.saved, d: esc(tip.dest) })
@@ -196,7 +294,7 @@ function plan(preserveSelection = false) {
       const head = `<div class="hd"><span class="cp" style="${i === 0 && !tipShown ? "color:var(--green);border-color:var(--green)" : ""}">${i === 0 && !tipShown ? tx("best") : ""}${tx("arrive", { t: Bus.fmt(r.final) })}</span><span class="cp">${tx("total_min", { n: Math.round(r.final - start) })}</span></div>`;
       card(r.legs, head, i === 0 && !tipShown, {
         walks, start, ready: start + r.o.d / WALK, final: r.final,
-        walkIn: r.o.d > 15 ? tx("walk_to_stop", { w: walkTxt(r.o.d), s: esc(places[r.o.id].name) }) : "",
+        walkIn: r.o.d > 15 ? tx("walk_to_stop", { w: walkTxt(r.o.d), s: esc(displayStopName(r.o.id)) }) : "",
         walkOut: r.d.d > 15 ? tx("walk_to_target", { w: walkTxt(r.d.d) }) : "",
         destLabel: tx("tl_target")
       });
@@ -272,11 +370,11 @@ $("cancelSelectedTrip").onclick = () => {
 function renderQuick() {
   const cnt = {}; buses.forEach(b => new Set(b.path).forEach(id => { if (places[id]) cnt[id] = (cnt[id] || 0) + 1; }));
   const top = Object.keys(cnt).sort((a, c) => cnt[c] - cnt[a]).slice(0, 8);
-  $("quick").innerHTML = top.map(id => `<button class="q" data-q="${esc(id)}">🏁 ${esc(places[id].name.replace(/\s*\(.*\)/, ""))}</button>`).join("");
+  $("quick").innerHTML = top.map(id => `<button class="q" data-q="${esc(id)}">🏁 ${esc(displayStopName(id).replace(/\s*\(.*\)/, ""))}</button>`).join("");
 }
 $("quick").onclick = e => {
   const q = e.target.closest("[data-q]"); if (!q) return;
-  $("toIn").value = places[q.dataset.q].name; destLL = null; clearTarget(); plan();
+  $("toIn").value = displayStopName(q.dataset.q); destLL = null; clearTarget(); plan();
 };
 
 /* pin a target on the map */
@@ -284,7 +382,7 @@ function setTarget(ll) {
   picking = false; destLL = ll; clearTarget();
   destMarker = L.marker(ll, { icon: L.divIcon({ className: "", iconSize: [30, 30], iconAnchor: [15, 28], html: '<div class="target">📍</div>' }) }).addTo(map);
   const n = nearStops(ll, 1)[0];
-  $("toIn").value = tx("pinned_target", { s: places[n.id].name });
+  $("toIn").value = tx("pinned_target", { s: displayStopName(n.id) });
   $("sheet").classList.remove("peek"); setTab("plan"); plan();
 }
 $("pickBtn").onclick = () => { picking = "to"; peek(); toast(tx("tap_target")); };

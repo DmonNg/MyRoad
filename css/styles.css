@@ -88,6 +88,13 @@ select.sel{background:rgba(18,28,45,.92);color:#fff;border:1px solid var(--line)
 /* cards, forms */
 .card{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:16px;padding:12px}
 .field{display:flex;flex-direction:column;gap:4px}
+.stop-search{position:relative;z-index:2}
+.stop-search:focus-within{z-index:20}
+.stop-suggestions{position:absolute;top:100%;left:0;right:0;z-index:1200;max-height:240px;overflow-y:auto;margin-top:4px;padding:4px;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.24)}
+.stop-suggestion{display:flex;width:100%;align-items:center;justify-content:space-between;gap:10px;border:0;border-radius:8px;padding:9px 10px;background:transparent;color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.stop-suggestion small{flex:none;color:var(--sub);font-size:.72rem}
+.stop-suggestion[aria-selected="true"],.stop-suggestion:hover{background:rgba(21,88,214,.12);color:var(--blue)}
+.stop-suggestion[aria-selected="true"] span{font-weight:900}
 .field label{font-size:.72rem;font-weight:800;color:var(--sub);letter-spacing:.05em}
 .field input,.field select{background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:12px;padding:11px 12px;color:#fff;font-family:inherit;font-size:1rem;font-weight:600;outline:none;width:100%;user-select:text;-webkit-user-select:text}
 .field input[type=range]{padding:0;border:0;background:transparent;accent-color:var(--blue)}

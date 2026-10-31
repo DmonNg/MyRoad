@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/styles.css?v10">
+<link rel="stylesheet" href="css/styles.css?v12">
 
 </head>
 <body>
@@ -91,10 +91,10 @@
       </div>
       <div class="card" style="display:flex;flex-direction:column;gap:10px">
         <div class="row">
-          <div class="field"><label data-i18n="lbl_from">FROM</label><input id="fromIn" list="placeList" data-i18n-ph="ph_from" placeholder="Where are you?" autocomplete="off"></div>
+          <div class="field stop-search"><label data-i18n="lbl_from">FROM</label><input id="fromIn" data-i18n-ph="ph_from" placeholder="Where are you?" autocomplete="off" aria-autocomplete="list" aria-controls="fromSuggestions"><div class="stop-suggestions hide" id="fromSuggestions" role="listbox"></div></div>
           <button class="swap" id="swapBtn" data-i18n-title="swap" title="Swap">⇅</button>
         </div>
-        <div class="field"><label data-i18n="lbl_to">TO</label><input id="toIn" list="placeList" data-i18n-ph="ph_to" placeholder="Where are you going?" autocomplete="off"></div>
+        <div class="field stop-search"><label data-i18n="lbl_to">TO</label><input id="toIn" data-i18n-ph="ph_to" placeholder="Where are you going?" autocomplete="off" aria-autocomplete="list" aria-controls="toSuggestions"><div class="stop-suggestions hide" id="toSuggestions" role="listbox"></div></div>
         <div class="qchips" id="quick"></div>
         <div class="row">
           <div class="field"><label data-i18n="lbl_leave">LEAVE AFTER</label><input id="timeIn" type="time"></div>
@@ -102,7 +102,6 @@
           <button class="mini" id="pickBtn" style="height:46px" data-i18n="pin_target">🎯 Pin target</button>
         </div>
         <button class="btn" id="goBtn" data-i18n="suggest">Suggest best route</button>
-        <datalist id="placeList"></datalist>
       </div>
       <div id="tripOut" style="display:flex;flex-direction:column;gap:10px;margin-top:12px"></div>
     </div>
@@ -161,10 +160,10 @@
 <script defer src="js/schedule.js?v4"></script>
 <script defer src="js/i18n.js?v6"></script>
 <script defer src="js/map.js?v6"></script>
-<script defer src="js/tabs.js?v5"></script>
-<script defer src="js/routes-tab.js?v5"></script>
-<script defer src="js/plan.js?v9"></script>
-<script defer src="js/stops-gps.js?v4"></script>
+<script defer src="js/tabs.js?v6"></script>
+<script defer src="js/routes-tab.js?v6"></script>
+<script defer src="js/plan.js?v13"></script>
+<script defer src="js/stops-gps.js?v5"></script>
 <script defer src="js/app.js?v5"></script>
 </body>
 </html>

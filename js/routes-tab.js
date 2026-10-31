@@ -20,7 +20,7 @@ function routeTipInfo(b) {
 }
 function routeTipHtml(b, di, running, now) {
   const info = routeTipInfo(b); if (!info) return "";
-  const kn = esc(places[KRP_ID].name), wd = dist(stopLL(CP_ID), stopLL(KRP_ID));
+  const kn = esc(displayStopName(KRP_ID)), wd = dist(stopLL(CP_ID), stopLL(KRP_ID));
   const pass = [];
   info.tl.keys.forEach((k, j) => { for (const dep of depsFor(b, k, di)) pass.push(Math.round(dep + off(info.tl, info.tl.starts[j], info.krp))); });
   const merged = [];                                   // same bus listed under two departure points -> keep one time
@@ -30,8 +30,8 @@ function routeTipHtml(b, di, running, now) {
     let cls = ""; if (running && now >= 0) { if (m < now) cls = "past"; else if (!marked) { cls = "next"; marked = true; } }
     return `<span class="chip ${cls}">${Bus.fmt(m)}</span>`;
   }).join("");
-  const list = info.stops.map(id => esc(places[id].name)).join(" · ");
-  return `<div class="tip"><b>${tx("tip_krp_title")}</b><span>${tx("tip_route", { b: esc(b.code), x: esc(places[info.x].name), full: info.full, short: info.short, s: kn, w: walkTxt(wd) })}</span>`
+  const list = info.stops.map(id => esc(displayStopName(id))).join(" · ");
+  return `<div class="tip"><b>${tx("tip_krp_title")}</b><span>${tx("tip_route", { b: esc(b.code), x: esc(displayStopName(info.x)), full: info.full, short: info.short, s: kn, w: walkTxt(wd) })}</span>`
     + `<div class="sub muted">${tx("tip_after", { s: kn, list })}</div>`
     + (chips ? `<div class="sub muted">${tx("tip_passes", { b: esc(b.code), s: kn })}</div><div class="chips">${chips}</div>` : "")
     + `<button class="mini" id="tipMap" style="align-self:flex-start;margin-top:6px">${tx("tip_show_map")}</button></div>`;
