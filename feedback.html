@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1558d6">
+<title>Send feedback – UTM Shuttle</title>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-QHZVRPJQYV"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-QHZVRPJQYV');
+</script>
+<link rel="stylesheet" href="css/feedback.css?v4">
+</head>
+<body>
+<header class="fbbar">
+  <a class="back" href="index.html">← <span data-t="back">Back to map</span></a>
+  <select id="langSel" aria-label="Language"><option value="en">English</option><option value="ms">Bahasa Melayu</option><option value="zh">中文</option></select>
+</header>
+
+<main class="fbwrap">
+  <section class="card" id="formCard">
+    <h1 data-t="title">Send feedback</h1>
+    <p class="muted" data-t="intro">Found a problem or have an idea? Tell the developer.</p>
+
+    <form id="fbForm" novalidate>
+      <fieldset>
+        <legend class="lbl" data-t="l_type">What is it about?</legend>
+        <div class="types">
+          <label><input type="radio" name="type" value="issue" checked><span data-t="t_issue">🐞 Something is wrong</span></label>
+          <label><input type="radio" name="type" value="improve"><span data-t="t_improve">💡 Suggestion</span></label>
+          <label><input type="radio" name="type" value="schedule"><span data-t="t_schedule">🕒 Wrong bus time / route</span></label>
+          <label><input type="radio" name="type" value="other"><span data-t="t_other">💬 Other</span></label>
+        </div>
+      </fieldset>
+
+      <div>
+        <label class="lbl" for="message" data-t="l_msg">What happened, or what can be improved?</label>
+        <textarea id="message" name="message" maxlength="2000" required data-ph="ph_msg"></textarea>
+        <div class="count" id="count">0 / 2000</div>
+      </div>
+
+      <div>
+        <label class="lbl" for="where" data-t="l_where">Bus / stop / screen (optional)</label>
+        <input type="text" id="where" name="where" maxlength="200" data-ph="ph_where" autocomplete="off">
+      </div>
+
+      <div>
+        <span class="lbl" data-t="l_rate">How is the app so far? (optional)</span>
+        <div class="rate" role="group">
+          <button type="button" data-v="1" aria-label="1">😡</button><button type="button" data-v="2" aria-label="2">😕</button><button type="button" data-v="3" aria-label="3">😐</button><button type="button" data-v="4" aria-label="4">🙂</button><button type="button" data-v="5" aria-label="5">😍</button>
+        </div>
+      </div>
+
+      <div>
+        <label class="lbl" for="email" data-t="l_email">Your email (optional)</label>
+        <input type="email" id="email" name="email" maxlength="120" autocomplete="email" inputmode="email">
+      </div>
+
+      <label class="chk"><input type="checkbox" id="tech" name="tech" checked><span data-t="l_tech">Include device &amp; app info</span></label>
+
+      <!-- honeypot: hidden from people, bots tick it -->
+      <div class="hp" aria-hidden="true"><label>Do not tick <input type="checkbox" name="botcheck" tabindex="-1" autocomplete="off"></label></div>
+
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+      <button class="send" id="sendBtn" type="submit" data-t="send">Send feedback</button>
+      <p class="muted" data-t="privacy">Your message is emailed to the developer.</p>
+    </form>
+  </section>
+
+  <section class="card hide" id="doneCard">
+    <h1 data-t="ok_title">Thank you! 🎉</h1>
+    <p class="muted" data-t="ok_text">Your feedback was sent.</p>
+    <button class="ghost" id="againBtn" type="button" data-t="again">Send another</button>
+    <a class="send" href="index.html" data-t="home">Back to map</a>
+  </section>
+  <noscript><p class="muted">Please enable JavaScript to send feedback.</p></noscript>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/feedback-core.js"></script>
+<script src="js/feedback.js"></script>
+</body>
+</html>
